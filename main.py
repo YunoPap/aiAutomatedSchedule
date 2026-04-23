@@ -1,24 +1,57 @@
 import pandas as pd
+import os
+from dotenv import load_dotenv
+# import openai  # You'll need to pip install openai
 
-
-def getCompanyRoles():
-    return companyRoles
-
+load_dotenv() # Loads your API key from .env
 
 def load_data():
-    pass
+    # Ensure these files exist in your directory
+    df_calendar = pd.read_csv('calendar.csv')
+    df_team = pd.read_csv('team_availability.csv')
+    return df_calendar, df_team
 
-def get_ai_scheduler():
-    pass
+def get_ai_schedule(availability_data, requirements):
+    # Convert dataframe to string/json so the AI can process it
+    availability_str = availability_data.to_string()
+    
+    prompt = f"""
+    Based on the following team availability:
+    {availability_str}
+    
+    Daily Requirements:
+    {requirements}
+    
+    Rules:
+    1. Assign roles based on the 'companyRoles' list.
+    2. No one exceeds 8 hours.
+    3. Ensure every role in 'requirements' is filled.
+    
+    Return the result as a Markdown table.
+    """
+    
+    print("--- Sending to AI ---")
+    # Example call (Uncomment when you have your API key set up)
+    # response = openai.chat.completions.create(
+    #     model="gpt-4",
+    #     messages=[{"role": "user", "content": prompt}]
+    # )
+    # return response.choices[0].message.content
+    return "AI Schedule Placeholder: [Simulated Table]"
 
-companyRoles = [
-    "CEO",
-    "Chef",
-    "Manager",
-    "Cook",
-    "Waiter",
-    "Runner",
-    "Dishwasher",
-    "Bartender",
-    "Host",
-]
+def main():
+    # 1. Load Data
+    calendar, team = load_data()
+    
+    # 2. Define today's necessity (This is your 'Changing roles' idea)
+    # You could eventually automate this based on the date
+    today_requirements = "We need 1 Chef, 2 Cooks, and 2 Waiters today."
+    
+    # 3. Get the schedule
+    final_schedule = get_ai_schedule(team, today_requirements)
+    
+    # 4. Output
+    print(final_schedule)
+
+if __name__ == "__main__":
+    main()
