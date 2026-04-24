@@ -5,6 +5,15 @@ from dotenv import load_dotenv
 
 load_dotenv() # Loads your API key from .env
 
+#company roles
+companyRoles = [
+    "Chef",
+    "Cook",
+    "Waiter",
+    "Manager",
+    "Dishwasher"
+]
+
 def load_data():
     # Ensure these files exist in your directory
     df_calendar = pd.read_csv('calendar.csv')
