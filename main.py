@@ -1,9 +1,10 @@
-import pandas as pd
 import os
+import pandas as pd
 from dotenv import load_dotenv
 # import openai  # You'll need to pip install openai
 
-load_dotenv() # Loads your API key from .env
+load_dotenv()  # Loads your OPENAI_API_KEY from .env or the environment
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 #company roles
 companyRoles = [
@@ -49,6 +50,10 @@ def get_ai_schedule(availability_data, requirements):
     return "AI Schedule Placeholder: [Simulated Table]"
 
 def main():
+    # 0. Validate environment
+    if not OPENAI_API_KEY:
+        print("Warning: OPENAI_API_KEY is not set. AI call will use placeholder output.")
+
     # 1. Load Data
     calendar, team = load_data()
     
