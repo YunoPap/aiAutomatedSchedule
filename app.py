@@ -11,6 +11,46 @@ st.markdown("Automate your team roles based on daily necessity and AI optimizati
 # Sidebar - Settings & File Uploads
 st.sidebar.header("Configuration")
 mode = st.sidebar.toggle("Live AI Mode", value=True)
+# Add this to app.py (usually in the sidebar section)
+
+st.sidebar.divider()
+st.sidebar.subheader("📅 Add New Event")
+
+with st.sidebar.form("calendar_form", clear_on_submit=True):
+    new_date = st.text_input("Date (YYYY-MM-DD)")
+    new_event = st.text_input("Event Name (e.g., Brunch)")
+    new_necessity = st.selectbox("Necessity Level", ["Low", "Medium", "High", "Very High"])
+    new_min_staff = st.number_input("Min Staff Needed", min_value=1, max_value=10, value=3)
+    
+    event_submitted = st.form_submit_button("Add Event")
+    
+    if event_submitted:
+        if new_date and new_event:
+            # 1. Load existing calendar
+            df_calendar = pd.read_csv('calendar.csv')
+            
+            # 2. Create the new row
+            # We determine the Day name automatically using Pandas
+            try:
+                day_name = pd.to_datetime(new_date).day_name()
+                new_event_row = {
+                    "Date": new_date,
+                    "Day": day_name,
+                    "Event_Type": new_event,
+                    "Necessity_Level": new_necessity,
+                    "Min_Staff_Required": new_min_staff
+                }
+                
+                # 3. Append and Save
+                df_cal_new = pd.concat([df_calendar, pd.DataFrame([new_event_row])], ignore_index=True)
+                df_cal_new.to_csv('calendar.csv', index=False)
+                
+                st.sidebar.success(f"Added {new_event} to calendar!")
+                st.rerun()
+            except Exception as date_err:
+                st.sidebar.error("Invalid date format. Use YYYY-MM-DD")
+        else:
+            st.sidebar.error("Please fill out Date and Event name.")
 
 try:
     # 1. Load Data
