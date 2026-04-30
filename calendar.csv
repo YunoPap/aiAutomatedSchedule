@@ -1,0 +1,6 @@
+Date,Day,Event_Type,Necessity_Level,Min_Staff_Required
+2026-05-01,Friday,Dinner Rush,High,5
+2026-05-02,Saturday,Private Wedding,Very High,6
+2026-05-03,Sunday,Brunch,Medium,4
+2026-05-04,Monday,Regular Shift,Low,3
+2026-05-05,Tuesday,Cleaning Day,Low,2

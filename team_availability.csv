@@ -1,0 +1,7 @@
+Name,Default_Role,Shift_Start,Shift_End,Max_Hours,Available_Monday,Available_Friday
+Michael,CEO,08:00,16:00,8,True,True
+Ben,Chef,09:00,17:00,8,True,True
+Sarah,Manager,10:00,18:00,8,True,True
+David,Cook,09:00,17:00,8,True,False
+Elena,Waiter,11:00,19:00,8,False,True
+Marcus,Bartender,16:00,23:00,7,True,True
