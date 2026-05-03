@@ -31,16 +31,16 @@ def load_data():
 def get_ai_schedule(availability_data, requirements, roles_list):
     availability_str = availability_data.to_string()
 
-    if not USE_OPENAI or not OPENAI_API_KEY or openai is None:
-        if not USE_OPENAI:
-            print("--- USE_OPENAI is disabled; using placeholder output ---")
-        if not OPENAI_API_KEY:
-            print("--- OPENAI_API_KEY missing; using placeholder output ---")
-        if openai is None:
-            print("--- openai package not installed; using placeholder output ---")
+    # We use the standard openai package, but point it to Ollama!
+    if openai is None:
+        print("--- openai package not installed; using placeholder output ---")
         return "AI Schedule Placeholder: [Simulated Table]"
 
-    client = openai.OpenAI(api_key=OPENAI_API_KEY)
+    # Point to the local Ollama server running on your machine
+    client = openai.OpenAI(
+        base_url="http://localhost:11434/v1",
+        api_key="ollama"  # Ollama doesn't care what this string is
+    )
 
     prompt = f"""
     Based on the following team availability:
@@ -57,17 +57,16 @@ def get_ai_schedule(availability_data, requirements, roles_list):
     3. Return the result as a Markdown table.
     """
 
-    print("--- Sending to OpenAI ---")
+    print("--- Sending to Local AI (Ollama) ---")
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",  # Or "gpt-3.5-turbo"
-            messages=[{"role": "user", "content": prompt}],
-            timeout=10
+            model="llama3.2",  # Tell it to use the model you just pulled
+            messages=[{"role": "user", "content": prompt}]
         )
         return response.choices[0].message.content
     except Exception as error:
-        print(f"--- OpenAI request failed: {error}; using placeholder output ---")
+        print(f"--- Ollama request failed: {error}; using placeholder output ---")
         return "AI Schedule Placeholder: [Simulated Table]"
 
 
