@@ -1,3 +1,4 @@
+import re
 import os
 from pathlib import Path
 import pandas as pd
@@ -15,61 +16,100 @@ USE_OPENAI = os.getenv("USE_OPENAI", "0").lower() in ("1", "true", "yes")
 
 # company roles
 companyRoles = [
+    "Manager",
     "Chef",
     "Cook",
     "Waiter",
-    "Manager",
-    "Dishwasher"
+    "Bartender"
 ]
 
+# Function to load data from CSV files
 def load_data():
     # Ensure these files exist in your directory
     df_calendar = pd.read_csv('calendar.csv')
     df_team = pd.read_csv('team_availability.csv')
     return df_calendar, df_team
 
+# This function is the core of the AI scheduling logic.
 def get_ai_schedule(availability_data, requirements, roles_list):
-    availability_str = availability_data.to_string()
+    if not OPENAI_API_KEY or openai is None:
+        return "AI Schedule Placeholder"
 
-    # We use the standard openai package, but point it to Ollama!
-    if openai is None:
-        print("--- openai package not installed; using placeholder output ---")
-        return "AI Schedule Placeholder: [Simulated Table]"
+    client = openai.OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
 
-    # Point to the local Ollama server running on your machine
-    client = openai.OpenAI(
-        base_url="http://localhost:11434/v1",
-        api_key="ollama"  # Ollama doesn't care what this string is
-    )
+    # 1. Prepare the Data
+    availability_markdown = availability_data[['Name', 'Default_Role', 'Shift_Start', 'Shift_End', 'Max_Hours']].to_markdown(index=False)
 
+    # 2. Simplified Prompt - We only ask the AI for the ROLE.
+    # We tell it we will handle the times ourselves to keep it from getting confused.
     prompt = f"""
-    Based on the following team availability:
-    {availability_str}
+    Assign exactly one role to each employee based on requirements.
+    
+    Requirements: {requirements}
+    Allowed Roles: {roles_list}
 
-    Daily Requirements:
-    {requirements}
-
-    Allowed Roles: {', '.join(roles_list)}
-
-    Rules:
-    1. Assign roles ONLY from the 'Allowed Roles' list.
-    2. No one exceeds their 'Max_Hours'.
-    3. Return the result as a Markdown table.
+    Output format: Name | Role
+    
+    Data:
+    {availability_markdown}
     """
-
-    print("--- Sending to Local AI (Ollama) ---")
 
     try:
         response = client.chat.completions.create(
-            model="llama3.2",  # Tell it to use the model you just pulled
-            messages=[{"role": "user", "content": prompt}]
+            model="llama3.2",
+            messages=[{"role": "system", "content": "You are a helpful assistant that only outputs Name | Role."},
+                      {"role": "user", "content": prompt}],
+            temperature=0.1
         )
-        return response.choices[0].message.content
+        ai_text = response.choices[0].message.content
+        
+        # 3. Create the Final Table
+        table_lines = [
+            "| Employee Name | Assigned Role | Shift Start | Shift End | Hours |",
+            "| :--- | :--- | :--- | :--- | :--- |"
+        ]
+
+        # Parse AI roles into a dictionary
+        role_assignments = {}
+        for line in ai_text.strip().split("\n"):
+            if "|" in line:
+                parts = [p.strip() for p in line.split("|") if p.strip()]
+                if len(parts) >= 2:
+                    role_assignments[parts[0]] = parts[1]
+
+        # 4. PYTHON LOGIC: Handle the 8-hour clipping
+        for _, row in availability_data.sort_values(by="Name").iterrows():
+            name = row['Name']
+            role = role_assignments.get(name, row['Default_Role'])
+            
+            # Get raw start/end from CSV
+            start_str = row['Shift_Start']
+            max_hours = int(row['Max_Hours'])
+            
+            # --- THE CLIPPER ---
+            # We take the start time and FORCE the end time to be Start + Max_Hours
+            try:
+                start_hour = int(start_str.split(':')[0])
+                end_hour = start_hour + max_hours
+                
+                # Format back to HH:00 (e.g., 8 becomes 08:00, 16 becomes 16:00)
+                final_start = f"{start_hour:02d}:00"
+                final_end = f"{min(end_hour, 23):02d}:00" # Don't go past 11PM
+            except:
+                final_start = row['Shift_Start']
+                final_end = row['Shift_End']
+
+            table_lines.append(f"| {name} | {role} | {final_start} | {final_end} | {max_hours} |")
+
+        return "\n".join(table_lines)
+
     except Exception as error:
-        print(f"--- Ollama request failed: {error}; using placeholder output ---")
-        return "AI Schedule Placeholder: [Simulated Table]"
+        return f"Error: {error}"
+
+   
 
 
+# ================= MAIN FUNCTION =================
 def main():
     # 1. Load Data
     calendar, team = load_data()

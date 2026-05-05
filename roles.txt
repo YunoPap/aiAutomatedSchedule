@@ -1,0 +1,6 @@
+Manager
+Chef
+Cook
+Waiter
+Bartender
+Hostess
