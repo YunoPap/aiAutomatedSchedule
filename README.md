@@ -1,3 +1,7 @@
+# By: Michael Purvis, Joseph Lariviere, Benjamin LaPointe
+
+
+
 # SmartShift AI: Intelligent Staff Scheduler
 
 SmartShift AI is an interactive scheduling application that automates team role assignments based on dynamic daily business demands, employee availability, and local AI optimization.
