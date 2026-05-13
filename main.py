@@ -5,7 +5,7 @@ import pandas as pd
 from dotenv import load_dotenv
 
 try:
-    import openai  # You'll need to pip install openai if you want real AI output
+    import openai
 except ImportError:
     openai = None
 
